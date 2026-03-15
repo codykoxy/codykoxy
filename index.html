@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>RAJU AI — Your Personal Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --gold:#ffd700;--gold2:#ffaa00;--dark:#080608;--panel:#100d14;--panel2:#18142060;
+  --border:rgba(255,215,0,0.18);--border2:rgba(255,215,0,0.08);
+  --red:#ff4455;--green:#00ffaa;--blue:#44aaff;
+  --glow:0 0 22px rgba(255,215,0,0.45);--glow2:0 0 8px rgba(255,215,0,0.2);
+  --text:rgba(255,255,255,0.88);--dim:rgba(255,255,255,0.32);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;background:var(--dark);color:var(--text);font-family:'Exo 2',sans-serif;overflow:hidden;}
+
+/* BG */
+#bgc{position:fixed;inset:0;z-index:0;}
+.grain{position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:1;opacity:.5;}
+
+/* APP SHELL */
+#app{position:relative;z-index:2;height:100vh;display:grid;grid-template-rows:auto auto 1fr;max-width:1100px;margin:0 auto;padding:0 10px;overflow:hidden;}
+
+/* HEADER */
+header{padding:14px 8px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.logo-wrap{display:flex;align-items:center;gap:14px;}
+.logo-ring{width:44px;height:44px;border-radius:50%;border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:1.2rem;box-shadow:var(--glow);animation:ringPulse 3s infinite;position:relative;}
+.logo-ring::after{content:'';position:absolute;inset:-5px;border-radius:50%;border:1px solid rgba(255,215,0,0.25);animation:ringPulse 3s infinite .5s;}
+@keyframes ringPulse{0%,100%{box-shadow:var(--glow)}50%{box-shadow:0 0 36px rgba(255,215,0,0.7)}}
+.logo-text{font-size:1.6rem;font-weight:800;letter-spacing:5px;color:var(--gold);text-shadow:var(--glow);}
+.logo-sub{font-size:.6rem;letter-spacing:3px;color:var(--dim);font-family:'Share Tech Mono',monospace;}
+.hdr-right{display:flex;align-items:center;gap:16px;}
+.hdr-info{font-family:'Share Tech Mono',monospace;font-size:.68rem;color:var(--dim);text-align:right;line-height:1.7;}
+.hdr-info b{color:var(--gold);}
+.hdr-info span.on{color:var(--green);}
+.hdr-info span.off{color:var(--red);}
+
+/* API KEY */
+#apibar{display:flex;align-items:center;gap:8px;padding:7px 8px;background:rgba(16,13,20,0.9);border-bottom:1px solid var(--border2);}
+#apibar label{font-family:'Share Tech Mono',monospace;font-size:.65rem;letter-spacing:2px;color:var(--dim);white-space:nowrap;}
+#akey{flex:1;background:rgba(0,0,0,0.5);border:1px solid var(--border);color:var(--gold);padding:5px 11px;font-family:'Share Tech Mono',monospace;font-size:.78rem;outline:none;border-radius:3px;}
+#akey:focus{border-color:var(--gold);}
+#akey::placeholder{color:var(--dim);}
+.ab{background:transparent;border:1px solid var(--gold);color:var(--gold);padding:5px 13px;font-family:'Exo 2',sans-serif;font-size:.7rem;font-weight:600;letter-spacing:2px;cursor:pointer;border-radius:3px;transition:all .18s;white-space:nowrap;}
+.ab:hover{background:var(--gold);color:var(--dark);}
+#kstat{font-family:'Share Tech Mono',monospace;font-size:.68rem;min-width:68px;}
+
+/* MAIN */
+main{display:grid;grid-template-columns:1fr 280px;gap:10px;overflow:hidden;padding:10px 0;min-height:0;}
+
+/* CHAT SECTION */
+.chat-col{display:flex;flex-direction:column;overflow:hidden;gap:8px;min-height:0;}
+
+/* LANG TOGGLE */
+.lang-bar{display:flex;gap:6px;align-items:center;flex-shrink:0;}
+.lang-bar label{font-size:.68rem;letter-spacing:2px;color:var(--dim);}
+.lbtn{background:transparent;border:1px solid var(--border);color:var(--dim);padding:4px 12px;font-family:'Exo 2',sans-serif;font-size:.72rem;font-weight:600;letter-spacing:1px;cursor:pointer;border-radius:20px;transition:all .18s;}
+.lbtn.active{border-color:var(--gold);color:var(--gold);background:rgba(255,215,0,0.08);}
+
+/* MESSAGES */
+#msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px 2px;}
+#msgs::-webkit-scrollbar{width:2px;}
+#msgs::-webkit-scrollbar-thumb{background:var(--gold);border-radius:2px;}
+.msg{display:flex;gap:9px;animation:msgIn .22s ease;}
+@keyframes msgIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.msg.user{flex-direction:row-reverse;align-self:flex-end;max-width:82%;}
+.msg.ai{max-width:88%;}
+.ava{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;flex-shrink:0;border:1px solid;font-family:'Exo 2',sans-serif;letter-spacing:1px;}
+.msg.ai .ava{background:rgba(255,215,0,0.08);color:var(--gold);border-color:rgba(255,215,0,0.35);box-shadow:var(--glow2);}
+.msg.user .ava{background:rgba(68,170,255,0.08);color:var(--blue);border-color:rgba(68,170,255,0.3);}
+.bub{padding:9px 14px;border-radius:4px;font-size:.93rem;line-height:1.65;word-break:break-word;}
+.msg.ai .bub{background:rgba(16,13,20,0.95);border:1px solid var(--border);border-left:2px solid var(--gold);}
+.msg.user .bub{background:rgba(68,170,255,0.07);border:1px solid rgba(68,170,255,0.2);border-right:2px solid var(--blue);}
+.sys-msg{text-align:center;font-family:'Share Tech Mono',monospace;font-size:.7rem;color:var(--dim);padding:6px;letter-spacing:1px;}
+.sys-msg span{color:var(--gold);}
+.tdots{display:flex;gap:4px;align-items:center;}
+.tdots span{width:6px;height:6px;background:var(--gold);border-radius:50%;animation:td 1.1s infinite;}
+.tdots span:nth-child(2){animation-delay:.2s;}.tdots span:nth-child(3){animation-delay:.4s;}
+@keyframes td{0%,100%{opacity:.2;transform:scale(.7)}50%{opacity:1;transform:scale(1)}}
+
+/* INPUT BAR */
+.input-bar{display:flex;gap:8px;align-items:flex-end;flex-shrink:0;}
+#inp{flex:1;background:rgba(16,13,20,0.95);border:1px solid var(--border);color:var(--text);padding:11px 14px;font-family:'Exo 2',sans-serif;font-size:.95rem;resize:none;outline:none;border-radius:4px;min-height:44px;max-height:100px;transition:border .2s;}
+#inp:focus{border-color:var(--gold);}
+#inp::placeholder{color:var(--dim);}
+.mic-btn{width:44px;height:44px;border-radius:50%;background:transparent;border:2px solid var(--gold);color:var(--gold);font-size:1.1rem;cursor:pointer;transition:all .2s;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.mic-btn:hover{background:rgba(255,215,0,0.1);box-shadow:var(--glow);}
+.mic-btn.on{background:rgba(255,68,85,0.15);border-color:var(--red);color:var(--red);animation:micPulse 1s infinite;}
+@keyframes micPulse{0%,100%{box-shadow:0 0 8px rgba(255,68,85,.4)}50%{box-shadow:0 0 22px rgba(255,68,85,.8)}}
+.send-btn{height:44px;padding:0 20px;background:var(--gold);color:var(--dark);border:none;font-family:'Exo 2',sans-serif;font-weight:800;font-size:.8rem;letter-spacing:2px;cursor:pointer;border-radius:4px;transition:all .2s;white-space:nowrap;}
+.send-btn:hover{box-shadow:var(--glow);transform:scale(1.03);}
+.send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+
+/* RIGHT PANEL */
+.right-col{display:flex;flex-direction:column;gap:8px;overflow:hidden;}
+
+/* CARDS */
+.card{background:rgba(16,13,20,0.8);border:1px solid var(--border2);border-radius:4px;overflow:hidden;flex-shrink:0;}
+.card-head{padding:9px 13px;border-bottom:1px solid var(--border2);font-size:.65rem;letter-spacing:3px;color:var(--gold);font-family:'Share Tech Mono',monospace;display:flex;align-items:center;justify-content:space-between;}
+.card-head span{color:var(--dim);font-size:.6rem;}
+.card-body{padding:12px;}
+
+/* VOICE STATUS */
+.voice-status{display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px 0;}
+.v-ring{width:60px;height:60px;border-radius:50%;border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:1.4rem;cursor:pointer;transition:all .3s;position:relative;}
+.v-ring::before{content:'';position:absolute;inset:-8px;border-radius:50%;border:1px solid rgba(255,215,0,0.2);animation:vrp 2.5s infinite;}
+@keyframes vrp{0%{opacity:.4}100%{opacity:0;transform:scale(1.15)}}
+.v-ring.listening{border-color:var(--red);background:rgba(255,68,85,0.1);animation:micPulse .8s infinite;}
+.v-ring.speaking{border-color:var(--green);background:rgba(0,255,170,0.08);}
+.v-label{font-family:'Share Tech Mono',monospace;font-size:.65rem;letter-spacing:2px;color:var(--dim);}
+.v-label.on{color:var(--gold);}
+.v-transcript{font-size:.78rem;color:var(--dim);text-align:center;min-height:28px;padding:4px;font-style:italic;line-height:1.5;}
+.tts-row{display:flex;align-items:center;justify-content:space-between;margin-top:6px;}
+.tts-row label{font-size:.72rem;color:var(--dim);letter-spacing:1px;}
+.toggle{width:40px;height:20px;background:rgba(255,255,255,0.1);border-radius:10px;border:1px solid var(--border);cursor:pointer;position:relative;transition:all .3s;}
+.toggle.on{background:rgba(255,215,0,0.25);border-color:var(--gold);}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;background:rgba(255,255,255,0.5);border-radius:50%;transition:all .3s;}
+.toggle.on::after{left:22px;background:var(--gold);box-shadow:var(--glow2);}
+/* LANG SELECT */
+.lang-sel{display:flex;gap:6px;flex-wrap:wrap;}
+.lg{background:transparent;border:1px solid var(--border);color:var(--dim);padding:5px 10px;font-family:'Exo 2',sans-serif;font-size:.72rem;font-weight:600;cursor:pointer;border-radius:3px;transition:all .18s;}
+.lg.active{border-color:var(--gold);color:var(--gold);background:rgba(255,215,0,0.07);}
+
+/* TODO */
+.todo-list{display:flex;flex-direction:column;gap:5px;max-height:160px;overflow-y:auto;margin-bottom:8px;}
+.todo-list::-webkit-scrollbar{width:2px;}
+.todo-list::-webkit-scrollbar-thumb{background:var(--gold);}
+.todo-item{display:flex;align-items:center;gap:8px;padding:6px 9px;background:rgba(0,0,0,0.2);border-radius:3px;border:1px solid var(--border2);}
+.todo-item.done .todo-text{text-decoration:line-through;color:var(--dim);}
+.todo-cb{width:14px;height:14px;border:1px solid var(--gold);border-radius:2px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.6rem;transition:all .18s;}
+.todo-cb.checked{background:var(--gold);color:var(--dark);}
+.todo-text{flex:1;font-size:.82rem;line-height:1.4;}
+.todo-del{background:none;border:none;color:var(--dim);cursor:pointer;font-size:.8rem;padding:0 2px;transition:color .2s;}
+.todo-del:hover{color:var(--red);}
+.todo-add{display:flex;gap:6px;}
+.todo-add input{flex:1;background:rgba(0,0,0,0.4);border:1px solid var(--border);color:var(--text);padding:6px 10px;font-family:'Exo 2',sans-serif;font-size:.82rem;outline:none;border-radius:3px;}
+.todo-add input:focus{border-color:var(--gold);}
+.todo-add input::placeholder{color:var(--dim);}
+.todo-add button{background:var(--gold);color:var(--dark);border:none;padding:6px 12px;font-family:'Exo 2',sans-serif;font-weight:700;font-size:.78rem;cursor:pointer;border-radius:3px;transition:all .18s;}
+.todo-add button:hover{box-shadow:var(--glow2);}
+
+/* COMMANDS */
+.cmd-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.cmd{background:rgba(0,0,0,0.25);border:1px solid var(--border2);padding:7px 9px;border-radius:3px;cursor:pointer;transition:all .18s;text-align:center;}
+.cmd:hover{border-color:rgba(255,215,0,0.35);background:rgba(255,215,0,0.04);}
+.cmd .ci{font-size:1.1rem;display:block;margin-bottom:3px;}
+.cmd .cn{font-size:.62rem;letter-spacing:1px;color:var(--dim);}
+
+/* NOTES */
+.notes-ta{width:100%;background:rgba(0,0,0,0.3);border:1px solid var(--border);color:var(--text);padding:8px 10px;font-family:'Exo 2',sans-serif;font-size:.82rem;resize:none;outline:none;border-radius:3px;height:70px;margin-bottom:6px;}
+.notes-ta:focus{border-color:var(--gold);}
+.notes-ta::placeholder{color:var(--dim);}
+.note-btns{display:flex;gap:6px;}
+.nb2{background:transparent;border:1px solid var(--gold);color:var(--gold);padding:5px 12px;font-family:'Exo 2',sans-serif;font-size:.68rem;font-weight:600;letter-spacing:1px;cursor:pointer;border-radius:3px;transition:all .18s;}
+.nb2:hover{background:var(--gold);color:var(--dark);}
+.nb2.d{border-color:var(--red);color:var(--red);}
+.nb2.d:hover{background:var(--red);color:#fff;}
+
+/* TOAST */
+#toast{position:fixed;top:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:7px;}
+.t2{background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--gold);padding:9px 14px;border-radius:3px;font-size:.8rem;animation:msgIn .25s ease;box-shadow:0 4px 20px rgba(0,0,0,.5);}
+.t2.e{border-left-color:var(--red);}
+.t2.g{border-left-color:var(--green);}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:2px;height:2px;}
+::-webkit-scrollbar-thumb{background:var(--gold);}
+
+@media(max-width:700px){
+  main{grid-template-columns:1fr;grid-template-rows:1fr auto;overflow-y:auto;}
+  .right-col{display:flex;flex-direction:row;flex-wrap:wrap;gap:8px;overflow:visible;}
+  .right-col .card{flex:1 1 calc(50% - 4px);min-width:140px;}
+  .right-col .card:last-child{flex:1 1 100%;}
+  #app{height:auto;min-height:100vh;overflow-y:auto;}
+  html,body{overflow:auto;}
+  .input-bar{flex-wrap:wrap;}
+  #msel{width:100%;height:36px;}
+  .send-btn{flex:1;}
+  .mic-btn{flex-shrink:0;}
+  .logo-text{font-size:1.1rem;letter-spacing:3px;}
+  .hdr-info{font-size:.6rem;}
+  #apibar{flex-wrap:wrap;gap:6px;}
+  #akey{min-width:0;}
+}
+</style>
+</head>
+<body>
+<canvas id="bgc"></canvas>
+<div class="grain"></div>
+<div id="app">
+
+<!-- HEADER -->
+<header>
+  <div class="logo-wrap">
+    <div class="logo-ring">🤖</div>
+    <div>
+      <div class="logo-text">RAJU AI</div>
+      <div class="logo-sub">PERSONAL INTELLIGENT ASSISTANT</div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <div class="hdr-info">
+      STATUS: <b id="hstat">STANDBY</b><br>
+      KEY: <span id="hkey" class="off">NOT SET</span><br>
+      <span id="hclock"></span>
+    </div>
+  </div>
+</header>
+
+<!-- API BAR -->
+<div id="apibar">
+  <label>GROQ KEY:</label>
+  <input type="password" id="akey" placeholder="gsk_xxxxxxxxxxxxxxxxxxxxxxxx" autocomplete="off"/>
+  <button class="ab" onclick="saveKey()">SAVE</button>
+  <button class="ab" style="border-color:var(--red);color:var(--red);" onclick="clearKey()">CLEAR</button>
+  <span id="kstat" style="color:var(--dim);">● NOT SET</span>
+</div>
+
+<!-- MAIN -->
+<main>
+
+  <!-- CHAT COL -->
+  <div class="chat-col">
+
+    <!-- LANG BAR -->
+    <div class="lang-bar">
+      <label>LANG:</label>
+      <button class="lbtn active" onclick="setLang('en',this)">English</button>
+      <button class="lbtn" onclick="setLang('hi',this)">हिंदी</button>
+      <button class="lbtn" onclick="setLang('hinglish',this)">Hinglish</button>
+    </div>
+
+    <!-- MESSAGES -->
+    <div id="msgs">
+      <div class="sys-msg">⚡ <span>RAJU AI</span> initialized — Save your Groq key to begin</div>
+    </div>
+
+    <!-- INPUT -->
+    <div class="input-bar">
+      <button class="mic-btn" id="micbtn" onclick="toggleMic()" title="Voice Input">🎙️</button>
+      <textarea id="inp" placeholder="Ask RAJU anything... (Enter to send, Shift+Enter for newline)" rows="1"
+        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send()}"></textarea>
+      <select id="msel" style="background:rgba(0,0,0,.6);border:1px solid var(--border);color:var(--gold);padding:0 8px;font-family:'Share Tech Mono',monospace;font-size:.7rem;outline:none;border-radius:4px;height:44px;cursor:pointer;">
+        <option value="llama3-70b-8192">LLaMA3 70B</option>
+        <option value="llama3-8b-8192">LLaMA3 8B</option>
+        <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
+        <option value="gemma2-9b-it">Gemma2 9B</option>
+      </select>
+      <button class="send-btn" id="sbtn" onclick="send()">SEND</button>
+    </div>
+
+  </div><!-- end chat col -->
+
+  <!-- RIGHT COL -->
+  <div class="right-col">
+
+    <!-- VOICE CARD -->
+    <div class="card">
+      <div class="card-head">🎙️ VOICE <span id="vlabel">IDLE</span></div>
+      <div class="card-body">
+        <div class="voice-status">
+          <div class="v-ring" id="vring" onclick="toggleMic()">🎙️</div>
+          <div class="v-label" id="vstl">TAP TO SPEAK</div>
+          <div class="v-transcript" id="vtrans">—</div>
+        </div>
+        <div class="tts-row">
+          <label>TEXT-TO-SPEECH</label>
+          <div class="toggle on" id="ttstog" onclick="togTTS()"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LANGUAGE CARD -->
+    <div class="card">
+      <div class="card-head">🌐 LANGUAGE</div>
+      <div class="card-body">
+        <div class="lang-sel">
+          <button class="lg active" onclick="setLang('en',this)">English</button>
+          <button class="lg" onclick="setLang('hi',this)">हिंदी</button>
+          <button class="lg" onclick="setLang('hinglish',this)">Hinglish</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMMANDS CARD -->
+    <div class="card">
+      <div class="card-head">⚡ QUICK COMMANDS</div>
+      <div class="card-body">
+        <div class="cmd-grid">
+          <div class="cmd" onclick="runCmd('open_chrome')"><span class="ci">🌐</span><span class="cn">CHROME</span></div>
+          <div class="cmd" onclick="runCmd('open_vscode')"><span class="ci">💻</span><span class="cn">VS CODE</span></div>
+          <div class="cmd" onclick="runCmd('play_music')"><span class="ci">🎵</span><span class="cn">MUSIC</span></div>
+          <div class="cmd" onclick="runCmd('weather')"><span class="ci">🌤️</span><span class="cn">WEATHER</span></div>
+          <div class="cmd" onclick="runCmd('joke')"><span class="ci">😄</span><span class="cn">JOKE</span></div>
+          <div class="cmd" onclick="runCmd('time')"><span class="ci">⏰</span><span class="cn">TIME</span></div>
+          <div class="cmd" onclick="runCmd('news')"><span class="ci">📰</span><span class="cn">NEWS</span></div>
+          <div class="cmd" onclick="runCmd('clear')"><span class="ci">🗑️</span><span class="cn">CLEAR</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TODO CARD -->
+    <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0;">
+      <div class="card-head">✅ TO-DO LIST <span id="tdcount">0 tasks</span></div>
+      <div class="card-body" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+        <div class="todo-list" id="tdlist"></div>
+        <div class="todo-add">
+          <input id="tdinp" placeholder="Add task..." onkeydown="if(event.key==='Enter')addTodo()"/>
+          <button onclick="addTodo()">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTES CARD -->
+    <div class="card">
+      <div class="card-head">📝 NOTES</div>
+      <div class="card-body">
+        <textarea class="notes-ta" id="notesta" placeholder="Quick notes..."></textarea>
+        <div class="note-btns">
+          <button class="nb2" onclick="saveNote()">💾 SAVE</button>
+          <button class="nb2 d" onclick="clearNote()">🗑 CLEAR</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end right col -->
+</main>
+</div><!-- end app -->
+<div id="toast"></div>
+
+<script>
+// ══════════════════ CANVAS BG ══════════════════
+(()=>{
+  const cv=document.getElementById('bgc'),ctx=cv.getContext('2d');
+  let W,H,stars=[];
+  const resize=()=>{W=cv.width=innerWidth;H=cv.height=innerHeight;stars=[];for(let i=0;i<80;i++)stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.2+.3,a:Math.random(),s:Math.random()*.004+.001});};
+  resize();window.addEventListener('resize',resize);
+  const draw=()=>{
+    ctx.fillStyle='rgba(8,6,8,0.18)';ctx.fillRect(0,0,W,H);
+    stars.forEach(s=>{s.a+=s.s;if(s.a>1||s.a<0)s.s*=-1;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(255,215,0,${s.a*.6})`;ctx.fill();});
+    requestAnimationFrame(draw);
+  };
+  ctx.fillStyle='#080608';ctx.fillRect(0,0,W,H);
+  draw();
+})();
+
+// ══════════════════ STATE ══════════════════
+let chatHist=[],loading=false,ttsOn=true,listening=false,recog=null,lang='en',todos=[];
+
+// ══════════════════ CLOCK ══════════════════
+setInterval(()=>document.getElementById('hclock').textContent=new Date().toLocaleTimeString('en-US',{hour12:false}),1000);
+
+// ══════════════════ TOAST ══════════════════
+function toast(msg,type=''){const w=document.getElementById('toast'),d=document.createElement('div');d.className='t2'+(type?' '+type:'');d.textContent=msg;w.appendChild(d);setTimeout(()=>d.remove(),3000);}
+
+// ══════════════════ API KEY ══════════════════
+function saveKey(){
+  const v=document.getElementById('akey').value.trim();
+  if(!v){toast('Enter your Groq API key first','e');return;}
+  if(!v.startsWith('gsk_')){toast('Invalid key format. Should start with gsk_','e');return;}
+  localStorage.setItem('raju_key',v);setKeyUI(true);
+  toast('✓ Key saved! RAJU is ready!','g');
+  document.getElementById('hstat').textContent='READY';
+  addSysMsg('✅ API key saved! RAJU AI is now online. How can I help you today?');
+}
+function clearKey(){localStorage.removeItem('raju_key');document.getElementById('akey').value='';setKeyUI(false);toast('Key cleared','e');}
+function getKey(){return localStorage.getItem('raju_key')||'';}
+function setKeyUI(on){
+  document.getElementById('kstat').textContent=on?'● KEY SET':'● NOT SET';
+  document.getElementById('kstat').style.color=on?'var(--green)':'var(--dim)';
+  document.getElementById('hkey').textContent=on?'SET':'NOT SET';
+  document.getElementById('hkey').className=on?'on':'off';
+}
+window.addEventListener('load',()=>{
+  const k=getKey();
+  if(k){document.getElementById('akey').value=k;setKeyUI(true);document.getElementById('hstat').textContent='READY';}
+  loadTodos();
+  const n=localStorage.getItem('raju_notes');
+  if(n)document.getElementById('notesta').value=n;
+});
+
+// ══════════════════ LANG ══════════════════
+function setLang(l, btn) {
+  lang = l;
+  // Sync ALL lang buttons (both .lbtn and .lg)
+  document.querySelectorAll('.lbtn, .lg').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.lbtn, .lg').forEach(b => {
+    const txt = b.textContent.trim().toLowerCase();
+    if (l === 'en' && txt === 'english') b.classList.add('active');
+    if (l === 'hi' && (txt === 'हिंदी' || txt.includes('hindi'))) b.classList.add('active');
+    if (l === 'hinglish' && txt === 'hinglish') b.classList.add('active');
+  });
+  const msgs = { en: 'Language set to English.', hi: 'भाषा हिंदी में सेट की गई।', hinglish: 'Bhai, language Hinglish mein set ho gayi!' };
+  toast(msgs[l] || msgs.en, 'g');
+}
+
+// ══════════════════ CHAT ══════════════════
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function addSysMsg(txt){
+  const w=document.getElementById('msgs');
+  const d=document.createElement('div');d.className='sys-msg';d.innerHTML=`⚡ <span>${esc(txt)}</span>`;
+  w.appendChild(d);w.scrollTop=w.scrollHeight;
+}
+function addMsg(role,html){
+  const w=document.getElementById('msgs');
+  const d=document.createElement('div');d.className='msg '+role;
+  const labels={user:'YOU',ai:'RAJU'};
+  d.innerHTML=`<div class="ava">${labels[role]}</div><div class="bub">${html}</div>`;
+  w.appendChild(d);w.scrollTop=w.scrollHeight;
+}
+function showTyp(){const w=document.getElementById('msgs'),d=document.createElement('div');d.className='msg ai';d.id='typ';d.innerHTML='<div class="ava">RAJU</div><div class="bub"><div class="tdots"><span></span><span></span><span></span></div></div>';w.appendChild(d);w.scrollTop=w.scrollHeight;}
+function rmTyp(){const t=document.getElementById('typ');if(t)t.remove();}
+
+function getSysPrompt(){
+  const prompts={
+    en:`You are RAJU AI, a powerful personal assistant like JARVIS. Be smart, friendly, and efficient. Keep answers clear and practical. If asked to open apps or control PC, give the exact terminal/keyboard command for Linux. Respond in English.`,
+    hi:`Aap RAJU AI hain, ek powerful personal assistant. Smart, friendly aur efficient rahein. Answers clear aur practical dein. Hindi mein jawab dein.`,
+    hinglish:`You are RAJU AI, ek powerful personal assistant like JARVIS. Smart aur friendly raho. Answers clear aur helpful do. Hinglish mein jawab do — mix of Hindi and English naturally.`
+  };
+  return prompts[lang]||prompts.en;
+}
+
+async function send(){
+  if(loading)return;
+  const inp=document.getElementById('inp'),text=inp.value.trim();if(!text)return;
+  const key=getKey();
+  if(!key){toast('⚠️ Save your Groq API key first!','e');addSysMsg('Please enter your Groq API key above and click SAVE.');return;}
+  inp.value='';inp.style.height='auto';
+
+  // Check local commands first
+  const local=handleLocalCmd(text);
+  if(local){addMsg('user',esc(text));addMsg('ai',local);if(ttsOn)speak(local.replace(/<[^>]+>/g,''));return;}
+
+  addMsg('user',esc(text).replace(/\n/g,'<br>'));
+  chatHist.push({role:'user',content:text});
+  loading=true;
+  document.getElementById('sbtn').disabled=true;
+  document.getElementById('hstat').textContent='THINKING...';
+  showTyp();
+  try{
+    const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body:JSON.stringify({
+        model:document.getElementById('msel').value,
+        messages:[{role:'system',content:getSysPrompt()},...chatHist],
+        max_tokens:1200,temperature:0.75
+      })
+    });
+    if(!r.ok){
+      const err=await r.json();
+      throw new Error(err.error?.message||'HTTP '+r.status);
+    }
+    const data=await r.json();
+    rmTyp();
+    if(data.choices&&data.choices[0]){
+      const reply=data.choices[0].message.content;
+      chatHist.push({role:'assistant',content:reply});
+      addMsg('ai',esc(reply).replace(/\n/g,'<br>'));
+      if(ttsOn)speak(reply.substring(0,500));
+      document.getElementById('hstat').textContent='READY';
+    } else {
+      throw new Error('Empty response from API');
+    }
+  }catch(e){
+    rmTyp();
+    const errMsg='⚠️ Error: '+e.message+'. Check your API key.';
+    addMsg('ai',errMsg);
+    toast(e.message,'e');
+    document.getElementById('hstat').textContent='ERROR';
+  }
+  loading=false;
+  document.getElementById('sbtn').disabled=false;
+}
+
+// ══════════════════ LOCAL COMMANDS ══════════════════
+function handleLocalCmd(text){
+  const t=text.toLowerCase();
+  if(/what.*time|kitne baj|time kya/.test(t))return `🕐 Current time is <b>${new Date().toLocaleTimeString()}</b>`;
+  if(/what.*date|aaj.*date|date kya/.test(t))return `📅 Today is <b>${new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</b>`;
+  if(/clear.*chat|chat.*clear|saaf karo/.test(t)){setTimeout(clearChat,300);return '🗑️ Clearing chat history...';}
+  if(/hello|hi raju|hey raju|namaste|namaskar/.test(t)){const g=['Hello! How can I help you today?','Namaste! Ready to assist you.','Hey! RAJU AI at your service!','Hi there! What do you need?'];return g[Math.floor(Math.random()*g.length)];}
+  if(/your name|kaun ho|naam kya/.test(t))return `I'm <b>RAJU AI</b> — your Personal Responsive Artificial Intelligence. Here to help you 24/7! 🤖`;
+  if(/open chrome|chrome kholo/.test(t))return `💡 To open Chrome on Linux, run in terminal:<br><code style="background:#000;padding:2px 6px;border-radius:2px;color:var(--green);">google-chrome &</code>`;
+  if(/open.*vs code|vscode kholo|code editor/.test(t))return `💡 To open VS Code:<br><code style="background:#000;padding:2px 6px;border-radius:2px;color:var(--green);">code .</code>`;
+  if(/open.*terminal|terminal kholo/.test(t))return `💡 Press <b>Ctrl+Alt+T</b> to open a terminal on Linux Mint.`;
+  if(/shutdown|band karo.*computer|system band/.test(t))return `💡 To shutdown Linux:<br><code style="background:#000;padding:2px 6px;border-radius:2px;color:var(--green);">sudo shutdown now</code>`;
+  if(/restart|restart karo/.test(t))return `💡 To restart Linux:<br><code style="background:#000;padding:2px 6px;border-radius:2px;color:var(--green);">sudo reboot</code>`;
+  if(/play music|music chalao|gana chalao/.test(t))return `🎵 Opening YouTube Music...<br><code style="background:#000;padding:2px 6px;border-radius:2px;color:var(--green);">xdg-open https://music.youtube.com</code>`;
+  if(/search.*file|file dhundo/.test(t)){const f=text.replace(/search.*file|file dhundo/i,'').trim();return f?`💡 To search for "${f}":<br><code style="background:#000;padding:2px 6px;border-radius:2px;color:var(--green);">find / -name "${f}" 2>/dev/null</code>`:`Tell me the filename to search.`;}
+  if(/ip address|mera ip|what.*ip/.test(t))return `💡 To find your IP:<br><code style="background:#000;padding:2px 6px;border-radius:2px;color:var(--green);">ip addr show</code> or <code style="background:#000;padding:2px 6px;border-radius:2px;color:var(--green);">hostname -I</code>`;
+  if(/disk.*space|storage kitna|df -h/.test(t))return `💡 To check disk space:<br><code style="background:#000;padding:2px 6px;border-radius:2px;color:var(--green);">df -h</code>`;
+  return null;
+}
+
+function clearChat(){chatHist=[];document.getElementById('msgs').innerHTML='';addSysMsg('Chat cleared. Ready for new session.');}
+
+// ══════════════════ QUICK COMMANDS ══════════════════
+const CMD_MAP={
+  open_chrome:()=>send2('How do I open Google Chrome in Linux terminal?'),
+  open_vscode:()=>send2('How do I open VS Code in Linux terminal?'),
+  play_music:()=>send2('How can I play music on Linux Mint?'),
+  weather:()=>send2(lang==='hi'?'Aaj ka mausam kaisa hai?':lang==='hinglish'?'Bhai aaj weather kaisa hai?':'What is the weather like today and how can I check it?'),
+  joke:()=>send2(lang==='hi'?'Koi funny joke sunao':lang==='hinglish'?'Bhai ek joke sunao':'Tell me a funny joke'),
+  time:()=>{addMsg('user','What time is it?');const r=handleLocalCmd('what time');if(r){addMsg('ai',r);if(ttsOn)speak(r.replace(/<[^>]+>/g,''));}},
+  news:()=>send2(lang==='hi'?'Aaj ki badi khabrein kya hain?':lang==='hinglish'?'Bhai aaj ki news kya hai?':'What are the top news topics I should know about today?'),
+  clear:()=>clearChat()
+};
+function runCmd(name){CMD_MAP[name]&&CMD_MAP[name]();}
+async function send2(text){document.getElementById('inp').value=text;await send();}
+
+// ══════════════════ TTS ══════════════════
+function speak(txt){
+  if(!ttsOn||!window.speechSynthesis)return;
+  const clean=txt.replace(/<[^>]+>/g,'').replace(/[⚡🤖💡🎵📅🕐🗑️]/g,'').trim();
+  if(!clean)return;
+  speechSynthesis.cancel();
+  const doSpeak=()=>{
+    const u=new SpeechSynthesisUtterance(clean);
+    u.rate=1.0;u.pitch=0.88;u.volume=1;
+    u.lang=lang==='hi'?'hi-IN':'en-US';
+    const vs=speechSynthesis.getVoices();
+    if(vs.length){
+      const pv=lang==='hi'
+        ?vs.find(v=>v.lang.startsWith('hi'))
+        :vs.find(v=>/Google UK English Male|Alex|Daniel|Google US English/i.test(v.name));
+      if(pv)u.voice=pv;
+    }
+    u.onstart=()=>{
+      const vr=document.getElementById('vring');
+      const vl=document.getElementById('vlabel');
+      const vs2=document.getElementById('vstl');
+      if(vr)vr.className='v-ring speaking';
+      if(vl)vl.textContent='SPEAKING';
+      if(vs2){vs2.textContent='SPEAKING...';vs2.classList.add('on');}
+    };
+    u.onend=u.onerror=()=>{
+      const vr=document.getElementById('vring');
+      const vl=document.getElementById('vlabel');
+      const vs2=document.getElementById('vstl');
+      if(vr)vr.className='v-ring';
+      if(vl)vl.textContent='IDLE';
+      if(vs2){vs2.textContent='TAP TO SPEAK';vs2.classList.remove('on');}
+    };
+    speechSynthesis.speak(u);
+  };
+  // Voices may not be loaded yet
+  if(speechSynthesis.getVoices().length){doSpeak();}
+  else{speechSynthesis.onvoiceschanged=doSpeak;}
+}
+function togTTS(){
+  ttsOn=!ttsOn;
+  document.getElementById('ttstog').classList.toggle('on',ttsOn);
+  if(!ttsOn)speechSynthesis&&speechSynthesis.cancel();
+  toast('TTS '+(ttsOn?'enabled ✓':'disabled'),ttsOn?'g':'');
+}
+
+// ══════════════════ VOICE INPUT ══════════════════
+function toggleMic(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){toast('Voice needs Chrome or Edge browser','e');addSysMsg('⚠️ Voice input requires Chrome or Edge browser.');return;}
+  if(listening){recog&&recog.stop();return;}
+  recog=new SR();
+  recog.lang=lang==='hi'?'hi-IN':lang==='hinglish'?'hi-IN':'en-US';
+  recog.continuous=false;recog.interimResults=true;recog.maxAlternatives=1;
+  recog.onstart=()=>{
+    listening=true;
+    document.getElementById('micbtn').classList.add('on');
+    document.getElementById('vring').className='v-ring listening';
+    document.getElementById('vstl').textContent='LISTENING...';
+    document.getElementById('vstl').classList.add('on');
+    document.getElementById('vlabel').textContent='LISTENING';
+    document.getElementById('vtrans').textContent='';
+    toast('🎙️ Listening... Speak now!','g');
+  };
+  recog.onresult=e=>{
+    const t=Array.from(e.results).map(r=>r[0].transcript).join('');
+    document.getElementById('vtrans').textContent=t;
+    document.getElementById('inp').value=t;
+  };
+  recog.onerror=e=>{
+    const errMsgs={
+      'not-allowed':'Microphone permission denied. Allow mic access in browser.',
+      'no-speech':'No speech detected. Try again.',
+      'network':'Network error during voice recognition.',
+      'aborted':'Voice input cancelled.'
+    };
+    toast(errMsgs[e.error]||'Voice error: '+e.error,'e');
+    rstMic();
+  };
+  recog.onend=async()=>{
+    rstMic();
+    const txt=document.getElementById('inp').value.trim();
+    if(txt){
+      toast('📨 Sending: "'+txt.substring(0,30)+'"...','g');
+      setTimeout(send,300);
+    }
+  };
+  try{recog.start();}catch(e){toast('Could not start mic: '+e.message,'e');}
+}
+function rstMic(){
+  listening=false;
+  document.getElementById('micbtn').classList.remove('on');
+  document.getElementById('vring').className='v-ring';
+  document.getElementById('vstl').textContent='TAP TO SPEAK';document.getElementById('vstl').classList.remove('on');
+  document.getElementById('vlabel').textContent='IDLE';
+}
+
+// ══════════════════ TODO ══════════════════
+function saveTodos(){localStorage.setItem('raju_todos',JSON.stringify(todos));}
+function loadTodos(){
+  const t=localStorage.getItem('raju_todos');
+  if(t){try{todos=JSON.parse(t);}catch(e){todos=[];}}
+  renderTodos();
+}
+function renderTodos(){
+  const list=document.getElementById('tdlist');
+  list.innerHTML=todos.map((t,i)=>`
+    <div class="todo-item${t.done?' done':''}">
+      <div class="todo-cb${t.done?' checked':''}" onclick="toggleTodo(${i})">${t.done?'✓':''}</div>
+      <span class="todo-text">${esc(t.text)}</span>
+      <button class="todo-del" onclick="delTodo(${i})">✕</button>
+    </div>`).join('');
+  const cnt=todos.filter(t=>!t.done).length;
+  document.getElementById('tdcount').textContent=cnt+' task'+(cnt!==1?'s':'');
+}
+function addTodo(){
+  const inp=document.getElementById('tdinp'),text=inp.value.trim();
+  if(!text)return;
+  todos.push({text,done:false});inp.value='';saveTodos();renderTodos();toast('Task added ✓','g');
+}
+function toggleTodo(i){todos[i].done=!todos[i].done;saveTodos();renderTodos();}
+function delTodo(i){todos.splice(i,1);saveTodos();renderTodos();}
+document.getElementById('tdinp').addEventListener('keydown',e=>{if(e.key==='Enter')addTodo();});
+
+// ══════════════════ NOTES ══════════════════
+function saveNote(){localStorage.setItem('raju_notes',document.getElementById('notesta').value);toast('Notes saved ✓','g');}
+function clearNote(){document.getElementById('notesta').value='';localStorage.removeItem('raju_notes');toast('Notes cleared');}
+</script>
+</body>
+</html>
